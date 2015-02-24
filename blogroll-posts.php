@@ -31,11 +31,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 if (!class_exists('blogroll_posts')) {
 	class blogroll_posts {
-	
+
 		function blogroll_posts() {
 			$this->version = "1.1.3";
 		}
-		
+
 		function get_settings() {
 			# Set up defaults
 			$settings = array(
@@ -44,7 +44,7 @@ if (!class_exists('blogroll_posts')) {
 				# How frequently to update cache? [hourly|twicedaily|daily]
 				'cache_update' => 'hourly',
 				# Category Limiting (csv or empty)
-				'categories' => '', 
+				'categories' => '',
 				# The number of posts you want cached per blog
 				'max_posts' => 0,
 				# The number of posts you want to output
@@ -54,11 +54,11 @@ if (!class_exists('blogroll_posts')) {
 				# The max number of posts per blog
 				'max_each' => 1,
 				# Sort order of output [random|newest|oldest]
-				'sort_order' => 'newest', 
+				'sort_order' => 'newest',
 
 				# the HTML to print before the list
 				'before_list' => '<ul>',
-				# the code to print out for each blog. Meta tags available: 
+				# the code to print out for each blog. Meta tags available:
 				# [planned] %date:FORMAT% (ie: %date:F j, Y%)
 				# '%blogurl%', '%blogtitle%', '%blogdesc%', # blog values from feed
 				# '%permalink%', '%title%', '%author%', '%date%', # post values from feed
@@ -88,7 +88,7 @@ if (!class_exists('blogroll_posts')) {
 				$settings = array_merge($settings, get_option('blogrollPosts_settings'));
 			return $settings;
 		}
-		
+
 		function get_cache() {
 			# Set up default
 			$cache = array(
@@ -101,15 +101,15 @@ if (!class_exists('blogroll_posts')) {
 			# echo 'cache:'; print_r($cache);
 			return $cache;
 		}
-		
+
 		function get_rss( $rssurl ) {
-			if (!function_exists('MagpieRSS')) { 
+			if (!function_exists('MagpieRSS')) {
 				include_once (ABSPATH . WPINC . '/rss.php');
 			}
 			# return rss file as parsed object
 			return fetch_rss($rssurl);
 		}
-		
+
 		function discover_rss( $url ) {
 			# fetch website url and parse for RSS feed link
 			if (!$url) return false;
@@ -192,13 +192,13 @@ if (!class_exists('blogroll_posts')) {
 			#!! should we sort by pubdate first?
 			if ($settings['max_posts'] > 0) $posts = array_slice($rss->items, 0, $settings['max_posts']);
 			else $posts = $rss->items;
-			
+
 			# build data for cache
 			$tocache = array();
 			foreach ( $posts as $post ) {
 				if (!isset($post['pubdate'])) {
 					# try dc:date
-					if (is_array($post['dc']) && array_key_exists('date', $post['dc'])) 
+					if (is_array($post['dc']) && array_key_exists('date', $post['dc']))
 						$post['pubdate'] = $post['dc']['date'];
 
 					if (!isset($post['pubdate'])) {
@@ -230,10 +230,10 @@ if (!class_exists('blogroll_posts')) {
 		function cache_blogroll( $settings = array(), $mode = 'all' ) {
 			$settings = array_merge($this->get_settings(), $settings);
 			$cache = $this->get_cache();
-			
+
 			# verify categories specified, cowardly refuse to cache otherwise
 			if ( !$settings['categories'] || trim($settings['categories']) == '' ) return false;
-			
+
 			# get current list of blogroll links in matching categories
 			$blogroll = get_bookmarks( array(
 				'category' => $settings['categories']
@@ -259,14 +259,14 @@ if (!class_exists('blogroll_posts')) {
 				} else {
 					# Attempt to discover rss feed
 					$feedurl = $this->discover_rss($blog->link_url);
-					
+
 					if ( $feedurl ) {
 						# Test link for redirects
 						$feedurl = $this->get_redirected_url($feedurl);
 						if ( $feedurl ) $cache['feeds'][$blog->link_url] = $feedurl;
 					}
 				}
-				
+
 				if ( ( $mode != 'links-only' ) && $feedurl ) {
 					# fetch latest post(s)
 					$feedposts = $this->get_latest($feedurl, $settings);
@@ -293,20 +293,20 @@ if (!class_exists('blogroll_posts')) {
 					unset($feedposts);
 				}
 			}
-			
+
 			# save updated cache data
 			update_option('blogrollPosts_cache', $cache);
-			
+
 			if ( $mode != 'links-only' ) {
 				# update last_update timestamp
 				$upd = get_option('blogrollPosts_settings');
 				$upd['last_updated'] = time();
 				update_option('blogrollPosts_settings', $upd);
 			}
-			
+
 			return true;
 		}
-		
+
 		/* sorting functions for blogroll posts */
 		function sort_by_date( $a, $b ) {
 			if ($a['timestamp'] == $b['timestamp']) return 0;
@@ -340,14 +340,14 @@ if (!class_exists('blogroll_posts')) {
 			# $p should be the field
 		    usort($oarray, create_function('$a,$b', 'if ($a[0][\'' . $p . '\']== $b[0][\'' . $p .'\']) return 0; return ($a[0][\'' . $p . '\'] > $b[0][\'' . $p .'\']) ? -1 : 1;'));
 		}
-		
+
 		/* print out the blogroll */
 		function print_blogroll( $settings = array(), $outputResults = true ) {
 			$settings = array_merge($this->get_settings(), $settings);
 			$cache = $this->get_cache();
-			
+
 			$max = $settings['max_output'];
-			
+
 			# Compile cached links from selected categories
 			$blogroll = get_bookmarks( array(
 				'category' => $settings['categories']
@@ -370,7 +370,7 @@ if (!class_exists('blogroll_posts')) {
 					}
 				} # else blog not cached, won't output, sorry
 			}
-			
+
 			if (count($posts)==0) {
 				# Trigger Failsafe, output max_output links from matching blogroll categories
 				# ----------------------------------------------
@@ -391,14 +391,14 @@ if (!class_exists('blogroll_posts')) {
 							),
 						$t
 					);
-					$output .= $t;				
+					$output .= $t;
 				}
 				$output .= stripslashes($settings['after_list']);
 				if (!$outputResults) return $output;
 				else echo $output;
 				return false;
 			}
-			
+
 			# Set up posts to output based on settings
 			# settings: type {random|newest|split}, max_output {#}, sort_order {random|newest|oldest}
 			switch ($settings['type']) {
@@ -428,7 +428,7 @@ if (!class_exists('blogroll_posts')) {
 				default:
 					usort($posts, array(&$this, 'sort_by_date'));
 			}
-			
+
 			# Snip to max_output
 			if ($settings['max_output']>0) $posts = array_slice($posts, 0, $settings['max_output']);
 
@@ -447,7 +447,7 @@ if (!class_exists('blogroll_posts')) {
 				default:
 					usort($posts, array(&$this, 'sort_by_date'));
 			}
-			
+
 			# Group posts
 			if ($settings['group_by'] && $settings['group_by']!='none') {
 				# convert setting to array key
@@ -492,7 +492,7 @@ if (!class_exists('blogroll_posts')) {
 						usort($groups, array(&$this, 'sort_group_by_date'));
 						break;
 				}
-				
+
 				# Snip to max_groups
 				if ($settings['max_groups']>0) $groups = array_slice($groups, 0, $settings['max_groups']);
 
@@ -503,28 +503,28 @@ if (!class_exists('blogroll_posts')) {
 			}
 			unset($posts);
 			# ----------------------------------------------
-			
+
 			# Output Resulting Post List
 			$output = $this->parse_replacements($settings['before_list'], $group[0]);
 			foreach ($groups as $group) {
 				# Output before_group template
 				$output .= $this->parse_replacements($settings['before_group'], $group[0]);
-				
+
 				# Loop through group's posts
 				foreach ($group as $post) {
 					$output .= $this->parse_replacements($settings['html_template'], $post);
 				}
-				
+
 				# Output after_group template
 				$output .= $this->parse_replacements($settings['after_group'], $group[0]);
 			}
 			$output .= $this->parse_replacements($settings['after_list'], $group[0]);
-			
+
 			if (!$outputResults) return $output;
 			else echo $output;
 			return true;
 		}
-		
+
 		function parse_replacements( $strfmt, &$post ) {
 			$strfmt = stripslashes($strfmt);
 
@@ -545,7 +545,7 @@ if (!class_exists('blogroll_posts')) {
 					'%linkurl%', '%linkname%', '%linkdesc%', '%feedurl%' # wp values
 					),
 				array(
-					$post['bloglink'], $post['blogtitle'], $post['blogdesc'], 
+					$post['bloglink'], $post['blogtitle'], $post['blogdesc'],
 					$post['link'], $post['title'], $post['author'], $post['pubdate'],
 					$post['link_url'], $post['link_name'], $post['link_description'], $post['link_rss']
 					),
@@ -555,7 +555,7 @@ if (!class_exists('blogroll_posts')) {
 		}
 
 		function setup_widget() {
-			if (!function_exists('register_sidebar_widget')) return;
+			if (!function_exists('wp_register_sidebar_widget')) return;
 			function widget_blogrollPosts($args) {
 				extract($args);
 				$options = get_option('widget_blogrollPosts');
@@ -572,19 +572,19 @@ if (!class_exists('blogroll_posts')) {
 				}
 				$title = htmlspecialchars($options['title'], ENT_QUOTES);
 				$settingspage = trailingslashit(get_option('siteurl')).'wp-admin/options-general.php?page='.basename(__FILE__);
-				echo 
+				echo
 				'<p><label for="blogrollPosts-title">Title:<input class="widefat" name="blogrollPosts-title" type="text" value="'.$title.'" /></label></p>'.
 				'<p>To control the other settings, please visit the <a href="'.$settingspage.'">Blogroll Posts Settings page</a>.</p>'.
 				'<input type="hidden" id="blogrollPosts-submit" name="blogrollPosts-submit" value="1" />';
 			}
-			register_sidebar_widget('blogroll-posts', 'widget_blogrollPosts');
-			register_widget_control('blogroll-posts', 'widget_blogrollPosts_control');
+			wp_register_sidebar_widget('blogroll-posts-1', 'blogroll-posts', 'widget_blogrollPosts');
+			wp_register_widget_control('blogroll-posts-1', 'blogroll-posts', 'widget_blogrollPosts_control');
 		}
-	
+
 		/* settings page */
 		function setup_settings_page() {
 			if (function_exists('add_options_page')) {
-				add_options_page('Blogroll Posts Settings', 'Blogroll Posts', 8, basename(__FILE__), array(&$this, 'print_settings_page'));
+				add_options_page('Blogroll Posts Settings', 'Blogroll Posts', 'manage_options', basename(__FILE__), array(&$this, 'print_settings_page'));
 				// add_action('admin_init', array(&$this, 'register_settings'));
 			}
 		}
@@ -596,7 +596,7 @@ if (!class_exists('blogroll_posts')) {
 			if (isset($_POST['save_blogrollPosts_settings'])) {
 				# Check if we need to reschedule updates
 				$reschedule = ($settings['cache_update']==$_POST['blogrollPosts_cache_update']) ? false : true;
-				
+
 				# Save new settings
 				# echo 'Old: <code>'; print_r($settings); echo '</code>';
 				foreach ($settings as $name => $value) {
@@ -605,7 +605,7 @@ if (!class_exists('blogroll_posts')) {
 				}
 				# echo 'New: <code>'; print_r($settings); echo '</code>';
 				update_option('blogrollPosts_settings', $settings);
-				
+
 				# Reschedule update if needed
 				if ($reschedule) $this->reschedule_updates();
 
@@ -638,7 +638,7 @@ if (!class_exists('blogroll_posts')) {
 				delete_option('blogrollPosts_cache');
 				echo '<div class="updated"><p>Blogroll Posts plugin settings and cache reset to default!</p></div>';
 			}
-			
+
 			# Pull settings again to account for updates before displaying form
 			$settings = $this->get_settings();
 			include("blogroll-posts-settings.php");
@@ -672,7 +672,7 @@ if (!class_exists('blogroll_posts')) {
 			array_unshift($links, '<a href="options-general.php?page=blogroll-posts.php">' . __('Settings') . '</a>');
 			return $links;
 		}
-		
+
 		/* scheduler functions via wp_cron */
 		function update_feeds() {
 			$this->cache_blogroll();
@@ -682,7 +682,7 @@ if (!class_exists('blogroll_posts')) {
 
 			# Remove old schedule
 			wp_clear_scheduled_hook('blogrollPosts_scheduled_update');
-			
+
 			# Set up new schedule, first run in 1hr (no scheduling for manual)
 			if ($settings['cache_update']!='manual')
 				wp_schedule_event(time()+3600, $settings['cache_update'], 'blogrollPosts_scheduled_update');
@@ -700,7 +700,7 @@ if (!class_exists('blogroll_posts')) {
 			# wipe out cache, no need to waste space
 			# but save settings in the event plugin is reactivated later
 			update_option('blogrollPosts_cache');
-			
+
 			# clear scheduled update process
 			wp_clear_scheduled_hook('blogrollPosts_scheduled_update');
 		}
